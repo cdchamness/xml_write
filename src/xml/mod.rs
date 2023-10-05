@@ -64,17 +64,18 @@ impl<T: Write> XMLWriter<T> {
         }
     }
 
-    pub fn new(writer: T) -> XMLWriter<T> {
-        XMLWriter {
+    pub fn new(mut writer: T) -> Result<XMLWriter<T>, Error> {
+        writer.write_all("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>".as_bytes())?;
+        Ok(XMLWriter {
             indentation: Indentation::default(),
             tag_buffer: vec![],
             writer,
-        }
+        })
     }
 
     pub fn open_tag(mut self, tagname: &str) -> Result<Self, Error> {
         self.writer
-            .write(format!("{}<{}>\n", self.indentation.get_indent(), tagname).as_bytes())?;
+            .write_all(format!("{}<{}>\n", self.indentation.get_indent(), tagname).as_bytes())?;
         self.indentation.increment();
         self.tag_buffer.push(tagname.to_string());
         Ok(self)
@@ -83,8 +84,8 @@ impl<T: Write> XMLWriter<T> {
     pub fn close_tag(mut self) -> Result<Self, Error> {
         self.indentation
             .decrement()
-            .ok_or(Error::new(ErrorKind::Other, "No open tag to close!"))?;
-        self.writer.write(
+            .ok_or_else(|| Error::new(ErrorKind::Other, "No open tag to close!"))?;
+        self.writer.write_all(
             format!(
                 "{}</{}>\n",
                 self.indentation.get_indent(),
@@ -96,7 +97,7 @@ impl<T: Write> XMLWriter<T> {
     }
 
     pub fn add_elem(mut self, tagname: &str, val: &str) -> Result<Self, Error> {
-        self.writer.write(
+        self.writer.write_all(
             format!(
                 "{}<{}>{}</{}>\n",
                 self.indentation.get_indent(),
