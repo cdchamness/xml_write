@@ -1,7 +1,5 @@
-# scribe
-An implementation to simplify writing for specific file types.
-
-This currently is only implemented for xmls using the XMLWriter<T: Write>
+# xml_write
+An implementation to simplify writing xml file types.
 
 ```rust
 let file = std::fs::File::create("foo.xml")?;
